@@ -1,11 +1,17 @@
 module Orthopolys
 
 export three_term_recurrence,
+       horner,
        jacobi_coefmatrix,
+       jacobi_eval,
        gegenbauer_coefmatrix,
+       gegenbauer_eval,
        prob_hermite_coefmatrix,
-       phys_hermite_coefmatrix
+       prob_hermite_eval,
+       phys_hermite_coefmatrix,
+       phys_hermite_eval      
        
+# Finds the n x n coefficient matrix of the polynomial defined by the recurrence relation:
 # p_0(z) = p
 # p_1(z) = q + r z
 # p_k(z) = a(k) p_{k-1}(z) + b(k) p_{k-2}(z) + c(k) z p_{k-1)(z)
@@ -34,8 +40,16 @@ function three_term_recurrence{T<:Number}(p::T, q::T, r::T, a::Function, b::Func
 
     m
 end
-     
-function jacobi_coefmatrix{T<:Number}(alpha::T, beta::T, n::Int)
+
+function horner{T<:Number}(coefficients::Vector{T}, x::T)
+    r = zero(T)
+    for coefficient in coefficients[end:-1:1]
+        r = r * x + coefficient
+    end
+    r
+end
+
+function jacobi_coefmatrix{T<:Number}(n::Int, alpha::T, beta::T)
     m = zeros(T, n, n)
     
     if n == 0
@@ -70,7 +84,7 @@ function jacobi_coefmatrix{T<:Number}(alpha::T, beta::T, n::Int)
     m
 end
 
-function jacobi_coefmatrix{T<:Number}(alpha::T, beta::T, n::Int, normalization::Symbol)
+function jacobi_coefmatrix{T<:Number}(n::Int, alpha::T, beta::T, normalization::Symbol)
     m = jacobi_coefmatrix(alpha, beta, n)
     if normalization == :std
         return m
@@ -82,7 +96,13 @@ function jacobi_coefmatrix{T<:Number}(alpha::T, beta::T, n::Int, normalization::
     end
 end
 
-function gegenbauer_coefmatrix{T<:Number}(alpha::T, n::Int)
+jacobi_eval{T<:Number}(n::Int, alpha::T, beta::T, x::T) =
+    horner(vec(jacobi_coefmatrix(n, alpha, beta)[n, :]), x)
+
+jacobi_eval{T<:Number}(n::Int, alpha::T, beta::T, x::T, normalization::Symbol) =
+    horner(vec(jacobi_coefmatrix(n, alpha, beta, normalization)[n, :]), x)
+
+function gegenbauer_coefmatrix{T<:Number}(n::Int, alpha::T)
     m = zeros(T, n, n)
     
     if n == 0
@@ -107,7 +127,7 @@ function gegenbauer_coefmatrix{T<:Number}(alpha::T, n::Int)
     m
 end
 
-function gegenbauer_coefmatrix{T<:Number}(alpha::T, n::Int, normalization::Symbol)
+function gegenbauer_coefmatrix{T<:Number}(n::Int, alpha::T, normalization::Symbol)
     m = gegenbauer_coefmatrix(alpha, n)
     if normalization == :std
         return m
@@ -119,7 +139,13 @@ function gegenbauer_coefmatrix{T<:Number}(alpha::T, n::Int, normalization::Symbo
     end
 end
 
-function prob_hermite_coefmatrix(T, n::Int)
+gegenbauer_eval{T<:Number}(n::Int, alpha::T, x::T) =
+    horner(vec(gegenbauer_coefmatrix(n, alpha)[n, :]), x)
+
+gegenbauer_eval{T<:Number}(n::Int, alpha::T, x::T, normalization::Symbol) =
+    horner(vec(gegenbauer_coefmatrix(n, alpha, normalization)[n, :]), x)
+
+function prob_hermite_coefmatrix(n::Int, T)
     m = zeros(T, n, n)
     
     if n == 0
@@ -135,16 +161,19 @@ function prob_hermite_coefmatrix(T, n::Int)
     m[2, 2] = one(T)
       
     for l in 3:n
-        m[l, 1] = - (l - 1) * m[l-2, 1]
+        m[l, 1] = - (l - 2) * m[l-2, 1]
         for i in 2:n
-            m[l, i] = m[l-1, i-1] - (l - 1) * m[l-2, i])
+            m[l, i] = m[l-1, i-1] - (l - 2) * m[l-2, i]
         end
     end
 
     m 
 end
 
-function phys_hermite_coefmatrix(T, n::Int)
+prob_hermite_eval{T<:Number}(n::Int, x::T) =
+    horner(vec(prob_hermite_coefmatrix(n)[n, :]), x)
+
+function phys_hermite_coefmatrix(n::Int, T)
     m = zeros(T, n, n)
     
     if n == 0
@@ -160,13 +189,16 @@ function phys_hermite_coefmatrix(T, n::Int)
     m[2, 2] = 2 * one(T)
       
     for l in 3:n
-        m[l, 1] = - 2 * (l - 1) * m[l-2, 1]
+        m[l, 1] = - 2 * (l - 2) * m[l-2, 1]
         for i in 2:n
-            m[l, i] = 2 * (m[l-1, i-1] - (l - 1) * m[l-2, i])
+            m[l, i] = 2 * (m[l-1, i-1] - (l - 2) * m[l-2, i])
         end
     end
 
     m 
 end
+
+phys_hermite_eval{T<:Number}(n::Int, x::T) =
+    horner(vec(phys_hermite_coefmatrix(n)[n, :]), x)
 
 end

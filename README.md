@@ -1,1 +1,1 @@
-Functions to compute the coefficient matrices of some orthogonal polynomials.
+Functions to evaluate and compute the coefficient matrices of orthogonal polynomials.
