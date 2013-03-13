@@ -1,1 +1,6 @@
-Functions to evaluate and compute the coefficient matrices of orthogonal polynomials.
+Orthogonal Polynomials.
+
+Currently supported
+ * Jacobi polyonomials
+ * Gegenbauer polynomials
+ * Hermite polynomials (probabilists' and physicists')
